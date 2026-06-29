@@ -11,11 +11,11 @@ const buttonFullscreen = document.getElementById('btn-fullscreen')
 const buttonMute = document.getElementById('btn-mute')
 const buttonMusic = document.getElementById('btn-music')
 
-dotnet.instance.Module['canvas'] = document.getElementById('canvas');
+const canvas = document.getElementById('canvas')
+
+dotnet.instance.Module['canvas'] = canvas;
 
 buttonFullscreen.addEventListener('click', () => {
-    const canvas = document.getElementById('canvas');
-    
     if (!document.fullscreenElement)
         canvas.requestFullscreen().catch(err =>
             console.error(`Unable to enter fullscreen: ${err.message}`)
@@ -28,7 +28,10 @@ buttonFullscreen.addEventListener('click', () => {
 document.addEventListener('fullscreenchange', () => {
     const isFullscreen = !!document.fullscreenElement
 
-    exports.WasmVersion.Program.InformFullscreen(isFullscreen);
+    const width = isFullscreen ? window.screen.width : canvas.width;
+    const height = isFullscreen ? window.screen.height : canvas.height;
+    
+    exports.WasmVersion.Program.InformFullscreen(isFullscreen, width, height);
     buttonFullscreen.innerText = isFullscreen ? "[ON] Fullscreen" : "[OFF] Fullscreen";
 });
 

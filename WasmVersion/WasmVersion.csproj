@@ -32,16 +32,11 @@
   </ItemGroup>
 
   <Choose>
-    <When Condition=" $(Configuration) == 'Debug' ">
-      <PropertyGroup>
-        <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
-        <EmccFlags>-sUSE_GLFW=3 -sVERBOSE=1 -Wbad-function-cast -Wcast-function-type -O2 -g3 -sINITIAL_MEMORY=128MB -sMAXIMUM_MEMORY=2048MB -sALLOW_MEMORY_GROWTH=1 -lexports.js</EmccFlags>
-      </PropertyGroup>
-    </When>
     <When Condition=" $(Configuration) == 'Release' ">
       <PropertyGroup>
-        <EmccFlags>-s USE_GLFW=3 -O3 -lexports.js</EmccFlags>
+        <EmccFlags>-sUSE_GLFW=3 -sUSE_WEBGL2=1 -O3 -sALLOW_MEMORY_GROWTH=1 -lexports.js</EmccFlags>
       </PropertyGroup>
     </When>
   </Choose>
+  
 </Project>
