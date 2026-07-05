@@ -12,6 +12,7 @@ public enum GameMode
 public class Game
 {
     public static GameState? State = null;
+    public static Canvas? Canvas = null;
     
     public static void Init(GameMode _mode)
     {
@@ -22,18 +23,22 @@ public class Game
         
         Raylib.SetConfigFlags(flags);
         Raylib.InitWindow
-            ((int)GameState.TargetSize.X, 
-            (int)GameState.TargetSize.Y, 
+            ((int)GameState.StartSize.X, 
+            (int)GameState.StartSize.Y, 
             $"Raylib GameJam ({_mode.ToString()} Version)"
         );
         Raylib.InitAudioDevice();
 
         State = new GameState(_mode);
+        Canvas = new Canvas();
     }
 
     public static void DesktopDeinit()
     {
         MusicPlayer.Unload();
+        
+        Canvas?.Dispose();
+        Canvas = null;
         
         State?.Dispose();
         State = null;
@@ -79,16 +84,16 @@ public class Game
 
         
         var screenMouse = Raylib.GetMousePosition();
-        var mouseX = (screenMouse.X - destX) * (GameState.TargetSize.X / renderSize);
-        var mouseY = (screenMouse.Y - destY) * (GameState.TargetSize.Y / renderSize);
+        var mouseX = (screenMouse.X - destX) * (GameState.StartSize.X / renderSize);
+        var mouseY = (screenMouse.Y - destY) * (GameState.StartSize.Y / renderSize);
         
         ref var mouse = ref State.VirtualMouse;
         
         mouse.X = mouseX;
         mouse.Y = mouseY;
         
-        mouse.X = Math.Clamp(mouse.X, 0, GameState.TargetSize.X);
-        mouse.Y = Math.Clamp(mouse.Y, 0, GameState.TargetSize.Y);
+        mouse.X = Math.Clamp(mouse.X, 0, GameState.StartSize.X);
+        mouse.Y = Math.Clamp(mouse.Y, 0, GameState.StartSize.Y);
     }
     
     public static void Frame()
@@ -104,8 +109,31 @@ public class Game
 
             if (Raylib.IsKeyPressed(KeyboardKey.F11))
             {
-                Raylib.ToggleBorderlessWindowed();
-                InformFullscreen(Raylib.IsWindowState(ConfigFlags.BorderlessWindowMode));
+                var wasFullscreen = Raylib.IsWindowFullscreen();
+
+                if (wasFullscreen)
+                { // going window
+                    Raylib.SetWindowSize(
+                        (int)State.LastWindowSize.X,
+                        (int)State.LastWindowSize.Y
+                    );
+
+                    State.LastWindowSize = default;
+                }
+                else
+                { // going fullscreen
+                    State.LastWindowSize.X = Raylib.GetRenderWidth();
+                    State.LastWindowSize.Y = Raylib.GetRenderHeight();
+                    
+                    var monitor = Raylib.GetCurrentMonitor();
+                    Raylib.SetWindowSize(
+                        Raylib.GetMonitorWidth(monitor),
+                        Raylib.GetMonitorHeight(monitor)
+                    );
+                }
+                
+                Raylib.ToggleFullscreen();
+                InformFullscreen(Raylib.IsWindowFullscreen());
             }
         }
         MusicPlayer.Process();
@@ -113,34 +141,15 @@ public class Game
 
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Black);
-
-
-        Raylib.BeginTextureMode(State.FitTexture);
-        Raylib.ClearBackground(GameState.BackgroundColor);
-        Draw();
-        Raylib.EndTextureMode();
+        
+        var rp = Canvas!.Render();
         Raylib.DrawTexturePro(
-            State.FitTexture.Texture, 
-            Utils.GetSourceRect(State.FitTexture),
+            rp.Texture, 
+            rp.Source,
             State.FitTextureDestRect,
             Vector2.Zero, 0, Color.White
         );
         
         Raylib.EndDrawing();
-    }
-
-    private static void Draw()
-    {
-        Raylib.DrawTexture(State!.Logo, 584, 584, Color.White);
-        Raylib.DrawText($"Time: {Raylib.GetTime()}", 20, 60, 32, Color.Blue);
-        Raylib.DrawText($"Muted: {State.IsMuted}", 20, 100, 32, Color.Magenta);
-        Raylib.DrawText($"Fullscreen: {State.IsFullscreen}", 20, 140, 32, Color.Purple);
-        Raylib.DrawText($"Render Size: {new Vector2(Raylib.GetRenderWidth(), Raylib.GetRenderHeight()).ToString()}", 20, 180, 32, Color.Pink);
-        Raylib.DrawText($"Screen Size: {new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight()).ToString()}", 20, 220, 32, Color.Red);
-        Raylib.DrawText($"Using framebuffer: {Raylib.IsRenderTextureValid(State.FitTexture)}", 20, 260, 32, Color.Beige);
-
-        Raylib.DrawCircleV(State.VirtualMouse, 10, Color.Green);
-        
-        Raylib.DrawFPS(10, 10);
     }
 }
