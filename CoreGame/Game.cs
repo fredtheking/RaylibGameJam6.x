@@ -150,6 +150,12 @@ public class Game
             Vector2.Zero, 0, Color.White
         );
         
+        Raylib.DrawText($"Time: {Raylib.GetTime()}", 20, 60, 32, Color.Blue);
+        Raylib.DrawText($"Muted: {State.IsMuted}", 20, 100, 32, Color.Magenta);
+        Raylib.DrawText($"Fullscreen: {State.IsFullscreen}", 20, 140, 32, Color.Purple);
+        
+        Raylib.DrawFPS(10, 10);
+        
         Raylib.EndDrawing();
     }
 }
